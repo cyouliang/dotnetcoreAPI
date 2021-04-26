@@ -7,18 +7,27 @@ trigger:
 - main
 
 pool:
-  vmImage: macos-latest
+  vmImage: "ubuntu-18.04"
 
 variables:
   buildConfiguration: 'Release'
 
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
+- task: DotNetCoreCLI@2
+  inputs:
+   command: 'restore'
+   feedsToUse: 'select'
+   vstsFeed: 'my-vsts-feed'
+
+- task: DotNetCoreCLI@2
+  inputs:
+   command: build
+   arguments: '--configuration $(buildConfiguration)'
   displayName: 'dotnet build $(buildConfiguration)'
 
-- task: PublishCodeCoverageResults@1
+#Run the test after other tasks such as building
+- task: DotNetCoreCLI@2  
   inputs:
-    codeCoverageTool: "JaCoCo"
-    summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/site/jacoco/jacoco.xml"
-    reportDirectory: "$(System.DefaultWorkingDirectory)/**/site/jacoco"
-    failIfCoverageEmpty: true
+    command: test
+    projects: '**/*Tests/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
